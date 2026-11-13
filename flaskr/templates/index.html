@@ -1,0 +1,171 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>勤怠打刻アプリ</title>
+
+    <!-- LINE LIFF SDK -->
+    <script
+        charset="utf-8"
+        src="https://static.line-scdn.net/liff/edge/2/sdk.js">
+    </script>
+
+    <style>
+        body { font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 20px; background: #f5f6f8; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h1 { font-size: 20px; text-align: center; margin-top: 0; }
+
+        .test-bar { background: #fff3cd; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 13px; text-align: center; }
+        .test-bar a { color: #0066cc; margin: 0 8px; font-weight: bold; }
+
+        .user-info { text-align: center; font-size: 15px; font-weight: bold; color: #444; margin-bottom: 5px; }
+        .clock-box { text-align: center; margin: 10px 0 20px; padding: 12px; background: #f9fafb; border-radius: 8px; }
+        .date-text { font-size: 14px; color: #666; margin-bottom: 4px; }
+        .time-text { font-size: 32px; font-weight: bold; color: #333; letter-spacing: 2px; }
+
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; margin-top: 8px; }
+        .status-working { background: #e6f9ed; color: #06c755; }
+        .status-break { background: #fff4e5; color: #ff9800; }
+        .status-off { background: #eee; color: #666; }
+
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        button { padding: 15px; font-size: 16px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; color: white; transition: opacity 0.2s; }
+        .btn-in { background-color: #06c755; }
+        .btn-out { background-color: #ff5b5b; }
+        .btn-break-start { background-color: #ff9800; }
+        .btn-break-end { background-color: #2196f3; }
+
+        button:disabled { background-color: #ccc; color: #888; cursor: not-allowed; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { padding: 10px 5px; border-bottom: 1px solid #eee; text-align: left; }
+    </style>
+</head>
+<body>
+
+    <div class="test-bar">
+        テスト切替：
+        <a href="/?user_id=test_user_1&user_name=テスト太郎">テスト太郎</a> |
+        <a href="/?user_id=test_user_2&user_name=テスト花子">テスト花子</a>
+    </div>
+
+    <div class="card">
+        <h1>勤怠打刻</h1>
+        <div class="user-info">{{ user_name }} さん</div>
+
+        <div class="clock-box">
+            <div id="current-date" class="date-text">----年--月--日 (-)</div>
+            <div id="current-time" class="time-text">--:--:--</div>
+
+            {% if last_action in ['出勤', '休憩終了'] %}
+                <div class="status-badge status-working">現在：出勤中</div>
+            {% elif last_action == '休憩開始' %}
+                <div class="status-badge status-break">現在：休憩中</div>
+            {% else %}
+                <div class="status-badge status-off">現在：未出勤 / 退勤済</div>
+            {% endif %}
+        </div>
+
+        <form action="/stamp" method="POST">
+            <input type="hidden" name="user_id" value="{{ user_id }}">
+            <input type="hidden" name="user_name" value="{{ user_name }}">
+
+            <div class="btn-grid">
+                <button type="submit" name="action" value="出勤" class="btn-in"
+                    {% if last_action not in [None, '退勤'] %}disabled{% endif %}>出勤</button>
+
+                <button type="submit" name="action" value="退勤" class="btn-out"
+                    {% if last_action not in ['出勤', '休憩終了'] %}disabled{% endif %}>退勤</button>
+
+                <button type="submit" name="action" value="休憩開始" class="btn-break-start"
+                    {% if last_action not in ['出勤', '休憩終了'] %}disabled{% endif %}>休憩開始</button>
+
+                <button type="submit" name="action" value="休憩終了" class="btn-break-end"
+                    {% if last_action != '休憩開始' %}disabled{% endif %}>休憩終了</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card">
+        <h1>{{ user_name }} さんの打刻履歴</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>名前</th>
+                    <th>種別</th>
+                    <th>日時</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td>{{ record[0] }}</td>
+                    <td><strong>{{ record[1] }}</strong></td>
+                    <td>{{ record[2] }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" style="text-align:center; color:#888;">まだ履歴がありません</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // 時計
+        function updateClock() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+            const weekday = weekdays[now.getDay()];
+
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+
+            document.getElementById('current-date').textContent =
+                `${year}年${month}月${day}日 (${weekday})`;
+            document.getElementById('current-time').textContent =
+                `${hours}:${minutes}:${seconds}`;
+        }
+
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        // LINE LIFF初期化
+        const LIFF_ID = "2012591432-7j0HJLFV";
+
+        async function initializeLiff() {
+            try {
+                await liff.init({
+                    liffId: LIFF_ID
+                });
+
+                console.log("LIFF初期化成功");
+
+                if (liff.isLoggedIn()) {
+                    console.log("LINEログイン済み");
+
+                    const profile = await liff.getProfile();
+                    console.log("LINEユーザーID:", profile.userId);
+                    console.log("LINE表示名:", profile.displayName);
+
+                } else {
+                    console.log("LINEログインしていません");
+                }
+
+            } catch (error) {
+                console.error("LIFF初期化エラー:", error);
+            }
+        }
+
+        initializeLiff();
+    </script>
+
+</body>
+</html>
