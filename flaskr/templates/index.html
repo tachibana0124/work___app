@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>勤怠打刻アプリ</title>
 
-    <!-- 外部CSSを読み込む -->
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='style.css') }}">
+    <!-- CSSを読み込む -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
@@ -41,25 +41,16 @@
 
         <form action="/register" method="POST">
 
-            <input type="hidden" name="line_user_id"
-                   value="{{ line_user_id }}">
+            <input type="hidden" name="line_user_id" value="{{ line_user_id }}">
 
             <div class="form-group">
                 <label for="employee_id">社員番号</label>
-                <input type="text"
-                       id="employee_id"
-                       name="employee_id"
-                       placeholder="例：EMP001"
-                       required>
+                <input type="text" id="employee_id" name="employee_id" placeholder="例：EMP001" required>
             </div>
 
             <div class="form-group">
                 <label for="password">初期パスワード</label>
-                <input type="password"
-                       id="password"
-                       name="password"
-                       placeholder="パスワードを入力"
-                       required>
+                <input type="password" id="password" name="password" placeholder="パスワードを入力" required>
             </div>
 
             <button type="submit" class="btn-register">
@@ -93,19 +84,19 @@
             </div>
 
             {% if last_action in ['出勤', '休憩終了'] %}
-                <div class="status-badge status-working">
-                    現在：出勤中
-                </div>
+            <div class="status-badge status-working">
+                現在：出勤中
+            </div>
 
             {% elif last_action == '休憩開始' %}
-                <div class="status-badge status-break">
-                    現在：休憩中
-                </div>
+            <div class="status-badge status-break">
+                現在：休憩中
+            </div>
 
             {% else %}
-                <div class="status-badge status-off">
-                    現在：未出勤 / 退勤済
-                </div>
+            <div class="status-badge status-off">
+                現在：未出勤 / 退勤済
+            </div>
             {% endif %}
 
         </div>
@@ -114,50 +105,35 @@
         <!-- 打刻フォーム -->
         <form action="/stamp" method="POST">
 
-            <input type="hidden" name="user_id"
-                   value="{{ user_id }}">
+            <input type="hidden" name="user_id" value="{{ user_id }}">
 
-            <input type="hidden" name="user_name"
-                   value="{{ user_name }}">
+            <input type="hidden" name="user_name" value="{{ user_name }}">
 
-            <input type="hidden" name="line_user_id"
-                   value="{{ line_user_id }}">
+            <input type="hidden" name="line_user_id" value="{{ line_user_id }}">
 
             <div class="btn-grid">
 
                 <!-- 出勤 -->
-                <button type="submit"
-                        name="action"
-                        value="出勤"
-                        class="btn-in"
-                        {% if last_action not in [None, '退勤'] %}disabled{% endif %}>
+                <button type="submit" name="action" value="出勤" class="btn-in"
+                    {% if last_action not in [None, '退勤'] %}disabled{% endif %}>
                     出勤
                 </button>
 
                 <!-- 退勤 -->
-                <button type="submit"
-                        name="action"
-                        value="退勤"
-                        class="btn-out"
-                        {% if last_action not in ['出勤', '休憩終了'] %}disabled{% endif %}>
+                <button type="submit" name="action" value="退勤" class="btn-out"
+                    {% if last_action not in ['出勤', '休憩終了'] %}disabled{% endif %}>
                     退勤
                 </button>
 
                 <!-- 休憩開始 -->
-                <button type="submit"
-                        name="action"
-                        value="休憩開始"
-                        class="btn-break-start"
-                        {% if last_action not in ['出勤', '休憩終了'] %}disabled{% endif %}>
+                <button type="submit" name="action" value="休憩開始" class="btn-break-start"
+                    {% if last_action not in ['出勤', '休憩終了'] %}disabled{% endif %}>
                     休憩開始
                 </button>
 
                 <!-- 休憩終了 -->
-                <button type="submit"
-                        name="action"
-                        value="休憩終了"
-                        class="btn-break-end"
-                        {% if last_action != '休憩開始' %}disabled{% endif %}>
+                <button type="submit" name="action" value="休憩終了" class="btn-break-end"
+                    {% if last_action != '休憩開始' %}disabled{% endif %}>
                     休憩終了
                 </button>
 
@@ -189,8 +165,7 @@
 
                 {% else %}
                 <tr>
-                    <td colspan="3"
-                        style="text-align:center; color:#888;">
+                    <td colspan="3" style="text-align:center; color:#888;">
                         まだ履歴がありません
                     </td>
                 </tr>
@@ -201,97 +176,8 @@
 
     {% endif %}
 
-
-    <!-- JavaScript：時計とLINE連携 -->
-    <script>
-        function updateClock() {
-            const dateEl = document.getElementById('current-date');
-            const timeEl = document.getElementById('current-time');
-
-            if (!dateEl || !timeEl) return;
-
-            const now = new Date();
-
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-
-            const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
-            const weekday = weekdays[now.getDay()];
-
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const seconds = String(now.getSeconds()).padStart(2, '0');
-
-            dateEl.textContent =
-                `${year}年${month}月${day}日 (${weekday})`;
-
-            timeEl.textContent =
-                `${hours}:${minutes}:${seconds}`;
-        }
-
-        updateClock();
-        setInterval(updateClock, 1000);
-
-
-        // LIFF設定
-        const LIFF_ID = "2012591432-7j0HJLFV";
-
-
-        // LIFF SDKを読み込む
-        function loadSdkAndInit() {
-            const s = document.createElement('script');
-
-            const host = 'https://' + 'static.' + 'line-scdn.net';
-            const path = '/liff/edge/2/sdk.js';
-
-            s.src = host + path;
-            s.onload = initializeLiff;
-
-            s.onerror = function() {
-                alert("SDKの読み込みに失敗しました");
-            };
-
-            document.head.appendChild(s);
-        }
-
-
-        // LIFFを初期化する
-        async function initializeLiff() {
-            try {
-                await liff.init({ liffId: LIFF_ID });
-
-                if (!liff.isLoggedIn()) {
-                    liff.login();
-                    return;
-                }
-
-                // LINEプロフィールを取得
-                const profile = await liff.getProfile();
-
-                // URLのLINEユーザーIDを取得
-                const urlParams =
-                    new URLSearchParams(window.location.search);
-
-                const currentLineId =
-                    urlParams.get('line_user_id');
-
-                // LINEユーザーIDが一致しなければURLを更新
-                if (currentLineId !== profile.userId) {
-                    window.location.href =
-                        `/?line_user_id=${encodeURIComponent(profile.userId)}`;
-                }
-
-            } catch (error) {
-                alert("LIFFエラー: " + error.message);
-            }
-        }
-
-
-        // ページ読み込み完了時にLIFFを起動
-        window.addEventListener('load', loadSdkAndInit);
-
-    </script>
+    <!-- JavaScriptを読み込む -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 
 </body>
 </html>
