@@ -5,48 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>勤怠打刻アプリ</title>
 
-
-    <style>
-        body { font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 20px; background: #f5f6f8; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        h1 { font-size: 20px; text-align: center; margin-top: 0; }
-
-        .test-bar { background: #fff3cd; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 13px; text-align: center; }
-        .test-bar a { color: #0066cc; margin: 0 8px; font-weight: bold; }
-
-        .user-info { text-align: center; font-size: 15px; font-weight: bold; color: #444; margin-bottom: 5px; }
-        .emp-badge { font-size: 12px; color: #888; font-weight: normal; }
-        .clock-box { text-align: center; margin: 10px 0 20px; padding: 12px; background: #f9fafb; border-radius: 8px; }
-        .date-text { font-size: 14px; color: #666; margin-bottom: 4px; }
-        .time-text { font-size: 32px; font-weight: bold; color: #333; letter-spacing: 2px; }
-
-        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; margin-top: 8px; }
-        .status-working { background: #e6f9ed; color: #06c755; }
-        .status-break { background: #fff4e5; color: #ff9800; }
-        .status-off { background: #eee; color: #666; }
-
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        button { padding: 15px; font-size: 16px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; color: white; transition: opacity 0.2s; }
-        .btn-in { background-color: #06c755; }
-        .btn-out { background-color: #ff5b5b; }
-        .btn-break-start { background-color: #ff9800; }
-        .btn-break-end { background-color: #2196f3; }
-        .btn-register { background-color: #06c755; width: 100%; margin-top: 10px; }
-
-        button:disabled { background-color: #ccc; color: #888; cursor: not-allowed; }
-
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 14px; font-weight: bold; margin-bottom: 6px; color: #333; }
-        .form-group input { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .error-box { background: #ffeaea; color: #d93025; padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 15px; text-align: center; font-weight: bold; }
-        .info-text { font-size: 13px; color: #666; line-height: 1.5; margin-bottom: 15px; }
-
-        table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        th, td { padding: 10px 5px; border-bottom: 1px solid #eee; text-align: left; }
-    </style>
+    <!-- 外部CSSを読み込む -->
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
 
+    <!-- PCテスト用の切り替え -->
     {% if not line_user_id %}
     <div class="test-bar">
         PCテスト切替：
@@ -55,12 +21,18 @@
     </div>
     {% endif %}
 
+
+    <!-- 未登録の場合：スタッフ登録画面 -->
     {% if not is_registered %}
+
     <div class="card">
         <h1>初回スタッフ登録</h1>
+
         <p class="info-text">
             お使いのLINEアカウントを社員情報と連携します。<br>
-            管理者から案内された<strong>社員番号</strong>と<strong>初期パスワード</strong>を入力してください。
+            管理者から案内された
+            <strong>社員番号</strong>と<strong>初期パスワード</strong>
+            を入力してください。
         </p>
 
         {% if error_msg %}
@@ -68,65 +40,136 @@
         {% endif %}
 
         <form action="/register" method="POST">
-            <input type="hidden" name="line_user_id" value="{{ line_user_id }}">
-            
+
+            <input type="hidden" name="line_user_id"
+                   value="{{ line_user_id }}">
+
             <div class="form-group">
                 <label for="employee_id">社員番号</label>
-                <input type="text" id="employee_id" name="employee_id" placeholder="例：EMP001" required>
+                <input type="text"
+                       id="employee_id"
+                       name="employee_id"
+                       placeholder="例：EMP001"
+                       required>
             </div>
 
             <div class="form-group">
                 <label for="password">初期パスワード</label>
-                <input type="password" id="password" name="password" placeholder="パスワードを入力" required>
+                <input type="password"
+                       id="password"
+                       name="password"
+                       placeholder="パスワードを入力"
+                       required>
             </div>
 
-            <button type="submit" class="btn-register">LINEと連携して利用開始</button>
+            <button type="submit" class="btn-register">
+                LINEと連携して利用開始
+            </button>
+
         </form>
     </div>
 
+
+    <!-- 登録済みの場合：勤怠打刻画面 -->
     {% else %}
+
     <div class="card">
         <h1>勤怠打刻</h1>
+
         <div class="user-info">
-            {{ user_name }} さん <span class="emp-badge">({{ user_id }})</span>
+            {{ user_name }} さん
+            <span class="emp-badge">({{ user_id }})</span>
         </div>
 
+        <!-- 現在日時と勤務状態 -->
         <div class="clock-box">
-            <div id="current-date" class="date-text">----年--月--日 (-)</div>
-            <div id="current-time" class="time-text">--:--:--</div>
+
+            <div id="current-date" class="date-text">
+                ----年--月--日 (-)
+            </div>
+
+            <div id="current-time" class="time-text">
+                --:--:--
+            </div>
 
             {% if last_action in ['出勤', '休憩終了'] %}
-                <div class="status-badge status-working">現在：出勤中</div>
+                <div class="status-badge status-working">
+                    現在：出勤中
+                </div>
+
             {% elif last_action == '休憩開始' %}
-                <div class="status-badge status-break">現在：休憩中</div>
+                <div class="status-badge status-break">
+                    現在：休憩中
+                </div>
+
             {% else %}
-                <div class="status-badge status-off">現在：未出勤 / 退勤済</div>
+                <div class="status-badge status-off">
+                    現在：未出勤 / 退勤済
+                </div>
             {% endif %}
+
         </div>
 
+
+        <!-- 打刻フォーム -->
         <form action="/stamp" method="POST">
-            <input type="hidden" name="user_id" value="{{ user_id }}">
-            <input type="hidden" name="user_name" value="{{ user_name }}">
-            <input type="hidden" name="line_user_id" value="{{ line_user_id }}">
+
+            <input type="hidden" name="user_id"
+                   value="{{ user_id }}">
+
+            <input type="hidden" name="user_name"
+                   value="{{ user_name }}">
+
+            <input type="hidden" name="line_user_id"
+                   value="{{ line_user_id }}">
 
             <div class="btn-grid">
-                <button type="submit" name="action" value="出勤" class="btn-in"
-                    {% if last_action not in [None, '退勤'] %}disabled{% endif %}>出勤</button>
 
-                <button type="submit" name="action" value="退勤" class="btn-out"
-                    {% if last_action not in ['出勤', '休憩終了'] %}disabled{% endif %}>退勤</button>
+                <!-- 出勤 -->
+                <button type="submit"
+                        name="action"
+                        value="出勤"
+                        class="btn-in"
+                        {% if last_action not in [None, '退勤'] %}disabled{% endif %}>
+                    出勤
+                </button>
 
-                <button type="submit" name="action" value="休憩開始" class="btn-break-start"
-                    {% if last_action not in ['出勤', '休憩終了'] %}disabled{% endif %}>休憩開始</button>
+                <!-- 退勤 -->
+                <button type="submit"
+                        name="action"
+                        value="退勤"
+                        class="btn-out"
+                        {% if last_action not in ['出勤', '休憩終了'] %}disabled{% endif %}>
+                    退勤
+                </button>
 
-                <button type="submit" name="action" value="休憩終了" class="btn-break-end"
-                    {% if last_action != '休憩開始' %}disabled{% endif %}>休憩終了</button>
+                <!-- 休憩開始 -->
+                <button type="submit"
+                        name="action"
+                        value="休憩開始"
+                        class="btn-break-start"
+                        {% if last_action not in ['出勤', '休憩終了'] %}disabled{% endif %}>
+                    休憩開始
+                </button>
+
+                <!-- 休憩終了 -->
+                <button type="submit"
+                        name="action"
+                        value="休憩終了"
+                        class="btn-break-end"
+                        {% if last_action != '休憩開始' %}disabled{% endif %}>
+                    休憩終了
+                </button>
+
             </div>
         </form>
     </div>
 
+
+    <!-- 打刻履歴 -->
     <div class="card">
         <h1>{{ user_name }} さんの打刻履歴</h1>
+
         <table>
             <thead>
                 <tr>
@@ -135,6 +178,7 @@
                     <th>日時</th>
                 </tr>
             </thead>
+
             <tbody>
                 {% for record in records %}
                 <tr>
@@ -142,26 +186,36 @@
                     <td><strong>{{ record[1] }}</strong></td>
                     <td>{{ record[2] }}</td>
                 </tr>
+
                 {% else %}
                 <tr>
-                    <td colspan="3" style="text-align:center; color:#888;">まだ履歴がありません</td>
+                    <td colspan="3"
+                        style="text-align:center; color:#888;">
+                        まだ履歴がありません
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+
     {% endif %}
 
+
+    <!-- JavaScript：時計とLINE連携 -->
     <script>
         function updateClock() {
             const dateEl = document.getElementById('current-date');
             const timeEl = document.getElementById('current-time');
+
             if (!dateEl || !timeEl) return;
 
             const now = new Date();
+
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0');
             const day = String(now.getDate()).padStart(2, '0');
+
             const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
             const weekday = weekdays[now.getDay()];
 
@@ -169,28 +223,40 @@
             const minutes = String(now.getMinutes()).padStart(2, '0');
             const seconds = String(now.getSeconds()).padStart(2, '0');
 
-            dateEl.textContent = `${year}年${month}月${day}日 (${weekday})`;
-            timeEl.textContent = `${hours}:${minutes}:${seconds}`;
+            dateEl.textContent =
+                `${year}年${month}月${day}日 (${weekday})`;
+
+            timeEl.textContent =
+                `${hours}:${minutes}:${seconds}`;
         }
 
         updateClock();
         setInterval(updateClock, 1000);
 
+
+        // LIFF設定
         const LIFF_ID = "2012591432-7j0HJLFV";
 
-        // URLが削られないように分割してSDKを読み込む
+
+        // LIFF SDKを読み込む
         function loadSdkAndInit() {
             const s = document.createElement('script');
-            const host = 'https://static.' + 'line-scdn.net';
+
+            const host = 'https://' + 'static.' + 'line-scdn.net';
             const path = '/liff/edge/2/sdk.js';
+
             s.src = host + path;
             s.onload = initializeLiff;
+
             s.onerror = function() {
                 alert("SDKの読み込みに失敗しました");
             };
+
             document.head.appendChild(s);
         }
 
+
+        // LIFFを初期化する
         async function initializeLiff() {
             try {
                 await liff.init({ liffId: LIFF_ID });
@@ -200,20 +266,32 @@
                     return;
                 }
 
+                // LINEプロフィールを取得
                 const profile = await liff.getProfile();
-                const urlParams = new URLSearchParams(window.location.search);
-                const currentLineId = urlParams.get('line_user_id');
 
+                // URLのLINEユーザーIDを取得
+                const urlParams =
+                    new URLSearchParams(window.location.search);
+
+                const currentLineId =
+                    urlParams.get('line_user_id');
+
+                // LINEユーザーIDが一致しなければURLを更新
                 if (currentLineId !== profile.userId) {
-                    window.location.href = `/?line_user_id=${encodeURIComponent(profile.userId)}`;
+                    window.location.href =
+                        `/?line_user_id=${encodeURIComponent(profile.userId)}`;
                 }
+
             } catch (error) {
                 alert("LIFFエラー: " + error.message);
             }
         }
 
+
+        // ページ読み込み完了時にLIFFを起動
         window.addEventListener('load', loadSdkAndInit);
+
     </script>
+
 </body>
 </html>
-
