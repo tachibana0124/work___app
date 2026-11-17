@@ -1,3 +1,4 @@
+// 現在時刻を取得して、HTML側に時間表示をしている
 function updateClock() {
     const dateEl = document.getElementById('current-date');
     const timeEl = document.getElementById('current-time');
@@ -28,11 +29,12 @@ updateClock();
 setInterval(updateClock, 1000);
 
 
-// LIFF設定
+// LIFF設定、LINE連携の設定
 const LIFF_ID = "2012591432-7j0HJLFV";
 
 
 // LIFF SDKを読み込む
+// SDKを使えるようにしている
 function loadSdkAndInit() {
     const s = document.createElement('script');
 
@@ -51,6 +53,8 @@ function loadSdkAndInit() {
 
 
 // LIFFを初期化する
+// 読み込んだSDKを使ってLINEと連携する処理
+//今回asyncで非同期処理を使えるようにしている
 async function initializeLiff() {
     try {
         await liff.init({ liffId: LIFF_ID });
