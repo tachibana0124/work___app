@@ -100,6 +100,18 @@ def admin_dashboard():
     return render_template('admin.html')
 
 
+# 管理者ログアウト
+@app.route('/admin/logout')
+def admin_logout():
+
+    # 管理者のログイン情報を削除
+    session.pop('admin_id', None)
+
+    # 管理者ログイン画面に戻す
+    return redirect(url_for('admin_login'))
+
+
+
 # トップページにアクセスされるとindexが実行される
 @app.route('/')
 def index():
