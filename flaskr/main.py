@@ -1,3 +1,4 @@
+
 import sqlite3
 from datetime import datetime
 from flask import render_template, request, redirect, url_for, session
@@ -100,6 +101,87 @@ def admin_dashboard():
     return render_template('admin.html')
 
 
+# 社員登録画面
+@app.route('/admin/employee')
+def admin_employee():
+
+    # 管理者ログイン確認
+    if 'admin_id' not in session:
+        return redirect(url_for('admin_login'))
+
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+
+    # 登録済み社員を取得
+    c.execute(
+        'SELECT employee_id, name, line_user_id FROM employees ORDER BY employee_id'
+    )
+    employees = c.fetchall()
+
+    conn.close()
+
+    # URLからメッセージを取得
+    message = request.args.get('message', '')
+
+    return render_template(
+        'admin_employee.html',
+        employees=employees,
+        message=message
+    )
+
+
+# 管理者による社員登録処理
+@app.route('/admin/employee/register', methods=['POST'])
+def admin_employee_register():
+
+    # 管理者ログイン確認
+    if 'admin_id' not in session:
+        return redirect(url_for('admin_login'))
+
+    # フォームから情報を取得
+    employee_id = request.form.get('employee_id', '').strip().upper()
+    name = request.form.get('name', '').strip()
+    password = request.form.get('password', '').strip()
+
+    # 入力チェック
+    if not employee_id or not name or not password:
+        return redirect(url_for(
+            'admin_employee',
+            message='すべての項目を入力してください'
+        ))
+
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+
+    # 社員IDの重複確認
+    c.execute(
+        'SELECT employee_id FROM employees WHERE employee_id = ?',
+        (employee_id,)
+    )
+
+    if c.fetchone():
+        conn.close()
+        return redirect(url_for(
+            'admin_employee',
+            message='この社員IDはすでに登録されています'
+        ))
+
+    # 社員情報を登録
+    c.execute('''
+        INSERT INTO employees
+        (employee_id, name, password, line_user_id)
+        VALUES (?, ?, ?, NULL)
+    ''', (employee_id, name, password))
+
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for(
+        'admin_employee',
+        message='社員を登録しました'
+    ))
+
+
 # 管理者ログアウト
 @app.route('/admin/logout')
 def admin_logout():
@@ -109,7 +191,6 @@ def admin_logout():
 
     # 管理者ログイン画面に戻す
     return redirect(url_for('admin_login'))
-
 
 
 # トップページにアクセスされるとindexが実行される
