@@ -190,3 +190,62 @@
         border-bottom: 1px solid #eee;
         text-align: left;
     }
+
+    /* =========================
+   管理者画面用デザイン
+========================= */
+
+/* 管理者メニュー */
+.admin-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.admin-menu-item {
+    background: #f9fafb;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.admin-menu-item h2 {
+    font-size: 16px;
+    margin: 0 0 10px;
+}
+
+.admin-menu-item a {
+    display: block;
+    background: #06c755;
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: bold;
+}
+
+/* 管理者画面の入力欄 */
+.admin-form input {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+/* 管理者画面のメッセージ */
+.message-box {
+    background: #e6f9ed;
+    color: #16803c;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    text-align: center;
+    font-size: 14px;
+}
+
+/* テーブルの横幅 */
+.table-wrapper {
+    overflow-x: auto;
+}
