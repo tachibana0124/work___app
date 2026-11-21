@@ -1,0 +1,100 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>社員管理</title>
+
+    <!-- CSSを読み込む -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <!-- 社員登録 -->
+    <div class="card">
+        <h1>社員管理</h1>
+
+        {% if message %}
+        <div class="message-box">
+            {{ message }}
+        </div>
+        {% endif %}
+
+        <h2>新規社員登録</h2>
+
+        <form action="{{ url_for('admin_employee_register') }}" method="POST" class="admin-form">
+
+            <div class="form-group">
+                <label>社員ID</label>
+                <input type="text" name="employee_id" required>
+            </div>
+
+            <div class="form-group">
+                <label>氏名</label>
+                <input type="text" name="name" required>
+            </div>
+
+            <div class="form-group">
+                <label>パスワード</label>
+                <input type="password" name="password" required>
+            </div>
+
+            <button type="submit" class="btn-register">
+                登録する
+            </button>
+
+        </form>
+    </div>
+
+    <!-- 登録済み社員一覧 -->
+    <div class="card">
+        <h1>登録済み社員一覧</h1>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>社員ID</th>
+                        <th>氏名</th>
+                        <th>LINE連携</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for employee in employees %}
+                    <tr>
+                        <td>{{ employee[0] }}</td>
+                        <td>{{ employee[1] }}</td>
+                        <td>
+                            {% if employee[2] %}
+                                連携済み
+                            {% else %}
+                                未連携
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" style="text-align:center; color:#888;">
+                            登録済み社員はいません
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="form-group">
+            <a href="{{ url_for('admin_dashboard') }}"
+               class="btn-register"
+               style="display:block; box-sizing:border-box; text-align:center; text-decoration:none; color:white; padding:15px;">
+                管理者メニューに戻る
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>
