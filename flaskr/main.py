@@ -183,14 +183,15 @@ def admin_employee_register():
 
 
 # 管理者ログアウト
+# 管理者ログアウト
 @app.route('/admin/logout')
 def admin_logout():
 
     # 管理者のログイン情報を削除
     session.pop('admin_id', None)
 
-    # 管理者ログイン画面に戻す
-    return redirect(url_for('admin_login'))
+    # 最初の選択画面に戻す
+    return redirect(url_for('index', mode='select'))
 
 
 # トップページにアクセスされるとindexが実行される
@@ -201,6 +202,8 @@ def index():
     line_user_id = request.args.get('line_user_id', '')
     error_msg = request.args.get('error', '')
     mode = request.args.get('mode', '')
+
+    
 
     # LINE経由でアクセスして、まだスタッフを選択していない場合
     # 最初の選択画面を表示する
