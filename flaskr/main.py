@@ -34,6 +34,18 @@ def init_db():
         )
     ''')
 
+    # 在籍状態のカラムが存在するか確認
+    c.execute("PRAGMA table_info(employees)")
+    columns = [column[1] for column in c.fetchall()]
+
+    # 存在しない場合だけ追加（既存データは維持）
+    if 'is_active' not in columns:
+        c.execute('''
+            ALTER TABLE employees
+            ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1
+        ''')
+
+
     # テスト用の初期社員データ（すでに登録済みの場合はスキップ）
     # Noneはnullって意味間違えないこと！！SQLではNULLとして扱われる
     sample_employees = [
@@ -105,6 +117,7 @@ def admin_dashboard():
 @app.route('/admin/employee')
 def admin_employee():
 
+
     # 管理者ログイン確認
     if 'admin_id' not in session:
         return redirect(url_for('admin_login'))
@@ -114,7 +127,11 @@ def admin_employee():
 
     # 登録済み社員を取得
     c.execute(
-        'SELECT employee_id, name, line_user_id FROM employees ORDER BY employee_id'
+        '''
+        SELECT employee_id, name, line_user_id, is_active
+        FROM employees
+        ORDER BY employee_id
+        '''
     )
     employees = c.fetchall()
 
@@ -128,7 +145,6 @@ def admin_employee():
         employees=employees,
         message=message
     )
-
 
 # 管理者による社員登録処理
 @app.route('/admin/employee/register', methods=['POST'])
@@ -182,6 +198,42 @@ def admin_employee_register():
     ))
 
 
+# 管理者による社員退職処理
+@app.route('/admin/employee/retire/<employee_id>', methods=['POST'])
+def admin_employee_retire(employee_id):
+
+    # 管理者ログイン確認
+    if 'admin_id' not in session:
+        return redirect(url_for('admin_login'))
+
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+
+    # 社員を退職済みに変更
+    c.execute('''
+        UPDATE employees
+        SET is_active = 0,
+            line_user_id = NULL
+        WHERE employee_id = ?
+          AND is_active = 1
+    ''', (employee_id,))
+
+    conn.commit()
+    updated_count = c.rowcount
+    conn.close()
+
+    # 処理結果を確認
+    if updated_count == 0:
+        message = '対象の社員が見つからないか、退職済みです'
+    else:
+        message = '社員を退職扱いにしました'
+
+    return redirect(url_for(
+        'admin_employee',
+        message=message
+    ))
+
+
 # 管理者ログアウト
 # 管理者ログアウト
 @app.route('/admin/logout')
@@ -214,15 +266,21 @@ def index():
             line_user_id=line_user_id
         )
 
-    # LINE経由でスタッフとして利用する場合
+        # LINE経由でスタッフとして利用する場合
     if line_user_id:
 
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
 
+    # 在籍中の社員だけを検索
         c.execute(
-            'SELECT employee_id, name FROM employees WHERE line_user_id = ?',
-            (line_user_id,)
+        '''
+        SELECT employee_id, name
+        FROM employees
+        WHERE line_user_id = ?
+          AND is_active = 1
+        ''',
+        (line_user_id,)
         )
         emp = c.fetchone()
 
@@ -314,9 +372,14 @@ def register():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
 
+   
     # 社員番号を使って社員情報を検索
     c.execute(
-        'SELECT name, password, line_user_id FROM employees WHERE employee_id = ?',
+        '''
+        SELECT name, password, line_user_id, is_active
+        FROM employees
+        WHERE employee_id = ?
+        ''',
         (employee_id,)
     )
     emp = c.fetchone()
@@ -331,10 +394,21 @@ def register():
             error='社員番号が見つかりません'
         ))
 
+    # 退職済みか確認
+    if emp[3] == 0:
+        conn.close()
+        return redirect(url_for(
+            'index',
+            line_user_id=line_user_id,
+            mode='staff',
+            error='退職済みのためログインできません。管理者にお問い合わせください'
+        ))
+
     # データベースから取得した情報を変数に格納
     db_name = emp[0]
     db_password = emp[1]
     db_line_id = emp[2]
+
 
     # 入力されたパスワードとDBのパスワードを比較
     if db_password != password:
