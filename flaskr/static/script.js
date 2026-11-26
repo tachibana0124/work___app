@@ -30,7 +30,7 @@ setInterval(updateClock, 1000);
 
 
 // LIFF設定、LINE連携の設定
-const LIFF_ID = "2012591432-7j0HJLFV";
+const LIFF_ID = "2012591434-epbeY7Qv";
 
 
 // LIFF SDKを読み込む
