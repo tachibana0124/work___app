@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 
@@ -23,8 +24,7 @@
 
 
     <!-- 最初の選択画面 -->
-
-{% if mode == 'select' %}
+    {% if mode == 'select' %}
 
     <div class="card">
         <h1>勤怠管理アプリ</h1>
@@ -49,6 +49,7 @@
             </a>
         </div>
     </div>
+
 
     <!-- 未登録の場合：スタッフ登録画面 -->
     {% elif not is_registered %}
@@ -203,6 +204,8 @@
     </div>
 
     {% endif %}
+
+
 
     <!-- JavaScriptを読み込む -->
     <script src="{{ url_for('static', filename='script.js') }}"></script>

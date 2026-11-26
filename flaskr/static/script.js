@@ -88,3 +88,4 @@ async function initializeLiff() {
 
 // ページ読み込み完了時にLIFFを起動
 window.addEventListener('load', loadSdkAndInit);
+

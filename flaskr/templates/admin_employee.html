@@ -7,7 +7,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>社員管理</title>
 
-    <!-- CSSを読み込む -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
@@ -60,6 +59,8 @@
                         <th>社員ID</th>
                         <th>氏名</th>
                         <th>LINE連携</th>
+                        <th>在籍状態</th>
+                        <th>操作</th>
                     </tr>
                 </thead>
 
@@ -68,6 +69,7 @@
                     <tr>
                         <td>{{ employee[0] }}</td>
                         <td>{{ employee[1] }}</td>
+
                         <td>
                             {% if employee[2] %}
                                 連携済み
@@ -75,10 +77,36 @@
                                 未連携
                             {% endif %}
                         </td>
+
+                        <td>
+                            {% if employee[3] == 1 %}
+                                在籍中
+                            {% else %}
+                                退職済み
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if employee[3] == 1 %}
+                            <form
+                                action="{{ url_for('admin_employee_retire', employee_id=employee[0]) }}"
+                                method="POST"
+                                onsubmit="return confirm('この社員を退職扱いにしますか？');">
+
+                                <button type="submit">
+                                    退職
+                                </button>
+
+                            </form>
+                            {% else %}
+                                退職済み
+                            {% endif %}
+                        </td>
                     </tr>
+
                     {% else %}
                     <tr>
-                        <td colspan="3" style="text-align:center; color:#888;">
+                        <td colspan="5" style="text-align:center; color:#888;">
                             登録済み社員はいません
                         </td>
                     </tr>
