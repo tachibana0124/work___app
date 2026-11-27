@@ -255,7 +255,13 @@ def index():
     error_msg = request.args.get('error', '')
     mode = request.args.get('mode', '')
 
-    
+    # 初回アクセス時は利用者選択画面を表示する
+    if not line_user_id and not request.args.get('user_id'): 
+        return render_template(
+        'index.html',
+        mode='select',
+        line_user_id=''
+    )
 
     # LINE経由でアクセスして、まだスタッフを選択していない場合
     # 最初の選択画面を表示する
